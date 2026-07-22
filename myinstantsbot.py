@@ -10,3 +10,7 @@ from dotenv import load_dotenv
 from typing import Optional
 from myinstants import search_instants
 
+load_dotenv()
+
+TOKEN = os.getenv("DISCORD_TOKEN")
+
