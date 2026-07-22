@@ -48,7 +48,7 @@ async def instant_autocomplete(
 
     try:
         results = await search_instants(current)
-        print(results)
+        # print(results)
     except Exception:
         return []
     
