@@ -1,0 +1,7 @@
+discord.py
+python-dotenv
+aiohttp
+parsel
+requests
+requests-toolbelt
+user_agent
