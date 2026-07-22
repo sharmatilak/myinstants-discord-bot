@@ -32,3 +32,48 @@ async def on_ready():
             print(cmd.name, cmd.options)
     except Exception as e:
         print(e)
+
+
+# Autocomplete
+
+instant_cache = {}
+
+async def instant_autocomplete(
+    interaction: discord.Interaction,
+    current: str,
+
+):
+    print("Autocomplete: ", current)
+    if not current:
+        return []
+
+    try:
+        results = await search_instants(current)
+        print(results)
+    except Exception:
+        return []
+    
+    user_id = interaction.user.id
+
+    # Create/clear this user's cache only
+    instant_cache[user_id] = {}
+
+    choices = []
+
+    for result in results[:25]:
+        key = uuid.uuid4().hex[:8] # Create a unique userid for each user
+
+        instant_cache[user_id][key] = {
+            "title": result["text"],
+            "url": result["url"],
+        }
+
+        choices.append(
+            app_commands.Choice(
+                name=result["text"][:100],
+                value=key
+            )
+        )
+
+    return choices
+
