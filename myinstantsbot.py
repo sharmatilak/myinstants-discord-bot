@@ -33,7 +33,6 @@ async def on_ready():
     except Exception as e:
         print(e)
 
-
 # Autocomplete
 
 instant_cache = {}
@@ -77,3 +76,80 @@ async def instant_autocomplete(
 
     return choices
 
+
+# Download Audio Bytes
+
+async def download_file(url: str) -> bytes:
+
+    async with aiohttp.ClientSession() as session:
+
+        async with session.get(url) as response:
+
+            response.raise_for_status()  # Raises an exception for HTTP errors
+            return await response.read()
+
+
+# Slash Command
+
+@bot.tree.command(
+    name="instants",
+    description="Search sounds"
+)
+@app_commands.allowed_installs(
+    guilds=True,
+    users=True,
+)
+@app_commands.allowed_contexts(
+    guilds=True,
+    dms=True,
+    private_channels=True,
+)
+async def instant(
+    interaction: discord.Interaction,
+    sound: str,
+    message: Optional[str] = None
+):
+    user_cache = instant_cache.get(interaction.user.id)
+
+    if user_cache is None:
+        await interaction.response.send_message(
+            "Your search expired. Please search again.",
+            ephemeral=True,
+        )
+        return
+
+    data = user_cache.get(sound)
+
+    if data is None:
+        await interaction.response.send_message(
+            "That option is no longer valid. Please search again.",
+            ephemeral=True,
+        )
+        return
+
+    title = data["title"]
+    safe_title = re.sub(r'[<>:"/\\|?*]', "_", title)
+    url = data["url"]
+
+    await interaction.response.defer()
+
+    audio_data = await download_file(url)
+
+    file = discord.File(
+        io.BytesIO(audio_data),
+        filename=f"{safe_title}.mp3"
+    )
+
+    if message is not None:
+        await interaction.followup.send(
+            content=message,
+            file=file,
+        )
+    else:
+        await interaction.followup.send(file=file)
+
+
+    # Optional: clean up this user's cache after use
+    instant_cache.pop(interaction.user.id, None)
+
+bot.run(TOKEN)
